@@ -39,69 +39,61 @@ public class MurderMystery extends Module {
         this.registerSetting(announceMurder = new TickSetting("Announce murderer", false));
     }
 
-    @Subscribe
-    public void onForgeEvent(ForgeEvent fe) {
-        if (fe.getEvent() instanceof RenderWorldLastEvent) {
-            if (Utils.Player.isPlayerInGame()) {
-                PlayerESP p = (PlayerESP) Raven.moduleManager.getModuleByName("PlayerESP");
-                assert p != null;
-                if (p.isEnabled()) {
-                    p.disable();
-                }
+   public void onForgeEvent(ForgeEvent fe) {
+    if (fe.getEvent() instanceof RenderWorldLastEvent) {
+        if (Utils.Player.isPlayerInGame()) {
+            PlayerESP p = (PlayerESP) Raven.moduleManager.getModuleByName("PlayerESP");
+            assert p != null;
+            if (p.isEnabled()) {
+                p.disable();
+            }
 
-                if (!this.inMMGame()) {
-                    this.c();
-                } else {
-                    Iterator<EntityPlayer> entityPlayerIterator = mc.theWorld.playerEntities.iterator();
+            if (!this.inMMGame()) {
+                this.c();
+            } else {
+                Iterator<EntityPlayer> entityPlayerIterator = mc.theWorld.playerEntities.iterator();
 
-                    while (true) {
-                        EntityPlayer entity;
-                        do {
-                            do {
-                                do {
-                                    if (!entityPlayerIterator.hasNext()) {
-                                        return;
-                                    }
+                while (entityPlayerIterator.hasNext()) {
+                    EntityPlayer entity = entityPlayerIterator.next();
 
-                                    entity = entityPlayerIterator.next();
-                                } while (entity == mc.thePlayer);
-                            } while (entity.isInvisible());
-                        } while (AntiBot.bot(entity));
-                        String c4 = "&7[&cALERT&7]";
-                        if (entity.getHeldItem() != null && entity.getHeldItem().hasDisplayName()) {
-                            Item i = entity.getHeldItem().getItem();
-                            if (i instanceof ItemSword || i instanceof ItemAxe || i instanceof ItemEnderPearl
-                                    || i instanceof ItemHoe || i instanceof ItemPickaxe || i instanceof ItemFishingRod
-                                    || entity.getHeldItem().getDisplayName().contains("Knife")) {
+                    // Skip if the entity is the local player or invisible
+                    if (entity == mc.thePlayer || entity.isInvisible()) {
+                        continue;
+                    }
 
-                                if (!mur.contains(entity)) {
-                                    mur.add(entity);
-                                    String c6 = "is a murderer!";
-                                    if (alertMurderers.isToggled()) {
-                                        String c5 = "note.pling";
-                                        mc.thePlayer.playSound(c5, 1.0F, 1.0F);
-                                        Utils.Player.sendMessageToSelf(c4 + " &e" + entity.getName() + " &3" + c6);
-                                    }
+                    // Skip if the entity is identified as a bot
+                    if (AntiBot.bot(entity)) {
+                        continue;
+                    }
 
-                                    if (announceMurder.isToggled()) {
-                                        String msg = Utils.Java.randomChoice(
-                                                new String[] { entity.getName() + " " + c6, entity.getName() });
-                                        mc.thePlayer.sendChatMessage(msg);
-                                    }
-                                }
-                            } else if (i instanceof ItemBow && searchDetectives.isToggled() && !det.contains(entity)) {
-                                det.add(entity);
-                                String c7 = "has a bow!";
-                                if (alertMurderers.isToggled()) {
-                                    Utils.Player.sendMessageToSelf(c4 + " &e" + entity.getName() + " &3" + c7);
-                                }
+                    String c4 = "&7[&cALERT&7]";
+                    if (entity.getHeldItemMainhand().getItem() instanceof ItemSword ||
+                        entity.getHeldItemMainhand().getItem() instanceof ItemAxe ||
+                        entity.getHeldItemMainhand().getItem() instanceof ItemEnderPearl ||
+                        entity.getHeldItemMainhand().getItem() instanceof ItemHoe ||
+                        entity.getHeldItemMainhand().getItem() instanceof ItemPickaxe ||
+                        entity.getHeldItemMainhand().getItem() instanceof ItemFishingRod ||
+                        entity.getHeldItemMainhand().getDisplayName().getString().contains("Knife")) {
+                        if (!mur.contains(entity)) {
+                            mur.add(entity);
+                            String c6 = "is a murderer!";
+                            if (alertMurderers.isToggled()) {
+                                String c5 = "note.pling";
+                                mc.thePlayer.playSound(c5, 1.0F, 1.0F);
+                                Utils.Player.sendMessageToSelf(c4 + " &e" + entity.getName() + " &3" + c6);
+                            }
 
-                                if (announceMurder.isToggled()) {
-                                    mc.thePlayer.sendChatMessage(entity.getName() + " " + c7);
-                                }
-
+                            if (announceMurder.isToggled()) {
+                                String msg = Utils.Java.randomChoice(new String[]{entity.getName() + " " + c6, entity.getName()});
+                                mc.thePlayer.sendChatMessage(msg);
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+}
 
                         int rgb = Color.cyan.getRGB();
                         if (mur.contains(entity)) {
